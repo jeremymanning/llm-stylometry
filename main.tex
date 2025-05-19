@@ -61,11 +61,11 @@ evolution.
 In this section, we outline our methodology for identifying stylometric
 signatures using large language models. For each selected author, we train a
 GPT-2 model~\citep{RadfEtal19} on that author's corpus. We then use the trained
-model to compute the prediction loss on some held-out texts from both the
-target author and each of the other authors in the dataset. By comparing these
-losses, we assess whether the model captures author-specific stylistic
-patterns: a model trained on a given author should exhibit lower loss when
-predicting that author's own texts compared to those of others.
+model to compute the cross-entropy loss on held-out texts from both the target
+author and each of the other authors in the dataset. By comparing these losses,
+we assess whether the model captures author-specific stylistic patterns: a
+model trained on a given author should exhibit lower loss when predicting that
+author's own texts compared to those of others.
 
 \subsection{Data and Preprocessing \label{sec:data}}
 
@@ -114,20 +114,20 @@ window of 1024 tokens, an embedding dimension of 128, 8 transformer layers, and
 8 attention heads per layer. We fit each model using the AdamW
 optimizer~\citep{LoshHutt19} with a learning rate of $5 \times 10^{-5}$ to
 minimize the cross-entropy loss on the training data. We train models using a
-causal language modeling objective, whereby the model predicts the next token
-in the sequence given all of the previous tokens in the same batch.
+causal language modeling objective, whereby the model iteratively predicts the
+next token in the sequence given all of the previous tokens in the same batch.
 
 We construct training samples by shuffling, concatenating, and then sampling
 1024-token chunks from the truncated corpus for the given author (constructed
 as described above, using contiguous sub-sequences selected from all but one of
 their books). Each training epoch consists of 40 batches, each containing 16
 sequences of 1024 tokens. This results in a total of 655,360 tokens per epoch.
-We continue training until the cross-entropy loss fell to 3.0 or lower. (We
+We continue training until the cross-entropy loss falls to 3.0 or lower. (We
 decided on this threshold after taking random draws from the models trained on
 Baum's and Thompson's \textit{Oz} books and manually inspecting the quality of
 the resulting samples.) Training to a fixed loss threshold (e.g., as opposed to
 training for a fixed number of epochs) enables us to fairly compare model
-performance across authors, which is a critical component of our stylometric
+performance across authors, which is the central component of our stylometric
 analyses.
 
 We evaluate the models using the held-out book from the corresponding author.
@@ -150,22 +150,23 @@ computed over 10 random seeds. Training losses are comparable across models,
 indicating that the models are trained to similar levels of performance. The
 other sub-panels of Figure~\ref{fig:merged}A show the average predictive
 (cross-entropy) loss, for each author's model, on held-out texts from each
-author. For every author's held-out text, the model trained on the same author
-produces the lowest loss, indicating a clear preference for its own author's
-stylistic patterns. As shown in Figure~\ref{fig:merged}B, across every author
-we considered, and for every random seed, models trained and tested on the same
-author always yield smaller losses than models trained on one author and tested
-on another (i.e., for each author, the highest black dot is always lower than
-the lowest gray dot in the Panel). Indeed, we achieve perfect (100\%)
-classification accuracy for matching authors with held-out texts by labeling
-the held-out text according to which model produces the smallest loss.
+author. For every author's held-out text, the model trained on the same
+author's writings produces the lowest loss, indicating a clear preference for
+its own author's stylistic patterns. As shown in Figure~\ref{fig:merged}B,
+across every author we considered, and for every random seed, models trained
+and tested on the same author always yield smaller losses than models trained
+on one author and tested on another (i.e., for each author, the highest black
+dot is always lower than the lowest gray dot in the Panel). Indeed, we achieve
+perfect (100\%) classification accuracy when matching authors with held-out
+texts by labeling the held-out text according to which model produces the
+smallest loss.
 
 \begin{figure*}[thb]
   \centering
   \includegraphics[width=0.9\textwidth]{figs/merged.pdf}
 
 
-\caption{\textbf{A.} Average cross-entopy loss on \textit{Train}ing data and
+\caption{\textbf{A.} Average cross-entropy loss on \textit{Train}ing data and
 held-out test data from each author, plotted as a function of the number of
 training epochs. Each color denotes a model trained on a single author's work.
 Error ribbons denote bootstrap-estimated 95\% confidence intervals over 10
@@ -198,7 +199,7 @@ reliably distinguish author styles. To investigate this, we compared the
 distributions (across random seeds) of average cross-entropy losses for each
 author's model computed for held-out text from the \textit{same} author versus
 for held-out text from \textit{other} authors. Figure~\ref{fig:merged}D
-displays the $t$-values from paired $t$-tests comparing these same vs. other
+displays the $t$-values from paired $t$-tests comparing these same versus other
 loss distributions for each of the first 500 training epochs. For all authors
 except Twain, the $t$-tests yielded $p$-values below $0.001$ after just one
 epoch, indicating that the models rapidly acquire author-specific stylometric
@@ -228,25 +229,24 @@ Wells       & 35.17 & 26.33 & $1.16 \times 10^{-23}$ \\
 \hline
 \end{tabular}
 
-\caption{Each row displays the results of a paired $t$-test comparing the
-average loss values assigned by each author's model (after 500 training epochs)
-to the author's held-out text and to the other authors' randomly sampled
-texts.}
+\caption{Each row displays the results of a $t$-test comparing the average loss
+values assigned by each author's model (after 500 training epochs) to the
+author's held-out text and to the other authors' randomly sampled texts.}
 
 \label{tab:t-tests}
 \end{table}
 
 Despite achieving perfect classification accuracy, not all authors are equally
 distinctive. For example, we reasoned that authors with similar writing styles
-might be more confusable (i.e., yielding relatively small losses for models
+might be more confusable (i.e., yielding relatively smaller losses for models
 trained across different authors). We computed the average loss for each author
 using the models trained on the other authors' texts (Fig.~\ref{fig:merged}F).
 Authors with similar writing styles (e.g., Baum and Thompson) yield relatively
 small losses when evaluated using models trained on the other author's texts.
 In contrast, authors with more distinct writing styles (e.g., Austen and
-Thompson) yeidl relatively large lossess when evaluated using each other's
+Thompson) yield relatively large losses when evaluated using each other's
 models. To illustrate these patterns, we also project the losses into a 3D
-space using multidimensional scaling (MDS)~\citep{Krus64} applied to the
+space using multidimensional scaling~\citep[MDS; ][]{Krus64} applied to the
 pairwise correlations between rows of the loss matrix, excluding the diagonal
 entries (i.e., the losses obtained using each author's model when applied to
 their own held-out text). We observed that Baum and Thompson (both authors of
@@ -261,16 +261,16 @@ some stylistic features that are shared across similar authors.
 As a special case, we also consider the contested authorship of the
 15\textsuperscript{th} \emph{Oz} book, which is widely believed to have been
 written by Ruth Plumly Thompson, but was originally attributed to L. Frank
-Baum~\citep{NiloBino03}. We applied our predicting comparison testing to the
-15\textsuperscript{th} \emph{Oz} book, using the models trained on Baum and
+Baum~\citep{NiloBino03}. We applied prediction comparison testing to the
+15\textsuperscript{th} \emph{Oz} book, using models trained on Baum and
 Thompson's undisputed \emph{Oz} books. As shown in the bottom left sub-panel of
 Figure~\ref{fig:merged}C, our approach yields lower loss for the
 Thompson-trained model than for the Baum-trained model, indicating that the
 contested book is indeed more similar to Thompson's writing style than to
 Baum's. We also applied both models to a non-\emph{Oz} book by Baum (bottom
 center) and Thompson (bottom right). Our approach yields lower losses for the
-correct author in each case, demonstrating that PCT is robust to thematic differences
-from the same author.
+correct author in each case, demonstrating that PCT is robust to thematic
+differences within the same author's writings.
 
 \subsection{Stylometric Distance}
 
@@ -290,7 +290,7 @@ Just as prior work has shown that it is possible to fine-tune LLMs to
 \textit{write} in the ``style'' or ``voice'' of a given author~\citep[see
 e.g.,][]{Mikr25}, our work shows that LLMs may also be used to predict
 authorship and measuring the stylistic distances between different authors. We
-note that our approach is broadly similar to that of \cite{Reza25}, who
+note that our approach is broadly similar to that of~\citet{Reza25}, who
 examined sentence level information using LLMs. Our work differs in scale (we
 use entire books rather than individual sentences) and in our reliance solely
 on cross-entropy loss as a measure of stylometric distance. We suggest that our
