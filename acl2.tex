@@ -139,7 +139,7 @@ philologist Wincenty Lutos{\l}awski, who had an interest in finding a
 statistical basis for addressing a long-standing problem in Classics of
 estimating the temporal order of Plato's Dialogues~\citep{Howl91}. Toward this
 end, Lutos{\l}awski measured hundreds of variables to arrive at his
-conclusions~\citep{Luto97}. Stylometric methods have been used at scale to understand the evolution of style in literature~\citep{HughEtal12} as well as judicial writing\cite{Carlson2016}, while also contributing to debates around uncertain authorship~\citep{MostWall63,MostWall84,NiloBino03,Juol08}. 
+conclusions~\citep{Luto97}. Stylometric methods have been used at scale to understand the evolution of style in literature~\citep{HughEtal12} as well as judicial writing\citep{Carlson2016}, while also contributing to debates around uncertain authorship~\citep{MostWall63,MostWall84,NiloBino03,Juol08}. 
 
 In this paper we introduce a new stylometric approach, {\em Predictive comparison testing} (PCT), based on LLMs. PCT derives from the hypothesis that given two LLMs of a fixed architecture and fixed broad  training, separately fine-tuned models ($A$ Aand $B)$  on similarly sized corpora of Author $A$ and $B$, that a held out work by Author $A$ will exhibit small predictive loss when tested with model $A$ than with model $B$. Comparison of prediction at the level of sentences and using textual information is put forward in \citep{rezaei-2025-detecting}. Our work differs both in the scale and reliance purely on the loss function. 
 
@@ -203,17 +203,13 @@ model captures author-specific stylistic patterns: a model trained on a given
 author should exhibit lower loss when predicting that author's own texts
 compared to those of others. 
 
-We begin by applying this approach to compare the works of Thompson and Baum,
-both authors of books in the \emph{Oz} series. We then extend our analysis to a
-broader set of eight authors.
+We begin by applying this approach to a set of eight selected authors, and then narrow our focus to compare the two \emph{Oz} series authors, Baum and Thompson, in greater detail. 
 
 \subsection{Data and Data Preprocessing}
 
-We begin our stylometric analysis with Frank Baum and Rosemary Plumly Thompson,
-both contributors to the \emph{Oz} series. 
 
-We then expand our study to include
-a broader set of eight authors: Jane Austen, L. Frank Baum, Charles Dickens, F.
+
+We first consider a set of eight authors: Jane Austen, L. Frank Baum, Charles Dickens, F.
 Scott Fitzgerald, Herman Melville, Rosemary Plumly Thompson, Mark Twain, and H.
 G. Wells. These authors were selected because their works are well-represented
 on Project Gutenberg, are all in the public domain, and are written in
@@ -223,7 +219,7 @@ information, illustration tags, transcriber notes, prefaces, tables of
 contents, and chapter headings. We standardize whitespace, remove non-ASCII
 characters, and lowercase all alphabetic characters. Basic statistics on token
 lengths and the full list of books used are provided in
-Appendix~\ref{sec:appendixA}.
+Appendix~\ref{sec:appendixA}. We then take on an author attribution question and (re-)visit scholarly debate around the 15th book in the \emph{Oz} series, and using PCT confirm attribution to Rosemary Plumly Thompson, as opposed to the series originator, L. Frank Baum.  
 
 \subsection{Model Training}
 % For each author, we randomly select a text to hold out for evaluation. 
@@ -283,11 +279,26 @@ quality of the resulting samples.
 
 \subsection{Predictive Comparison Testing}
 
+\subsubsection{Eight-Author Comparison}
+
+For each author, we compute the predictive loss of the corresponding
+model on a held-out book by that author, as well as on one randomly selected
+book from each of the other authors. We then compute the average next-token cross-entropy with sliding windows.
+
+Figure~\ref{fig:merged}B presents the evaluation results across all eight
+authors. Training losses are again comparable across models, ensuring a fair
+basis for comparison. For each author, we compare the predictive losses of all
+models on that author's held-out text. For every author's held-out text, the
+model trained on the matching author achieves the lowest loss, indicating a
+clear preference for its own author's stylistic patterns. This consistent
+alignment provides strong evidence that the GPT-2 models have learned to encode
+author-specific stylometric features.
+
 \subsubsection{Baum vs. Thompson}
 
-After each training epoch, we compute the loss of every model on its
+Once again, after each training epoch, we compute the loss of every model on its
 corresponding held-out book as well as on one randomly selected book from the
-other author's corpora. For the specific case of Baum and Thompson, we include
+other author's corpora. For the specific case of Baum and Thompson (and following \citep{NiloBino03}, we include
 three additional evaluation texts: the contested 15\textsuperscript{th}
 \emph{Oz} book (authorship disputed between Baum and Thompson), a non-\emph{Oz}
 book authored by Thompson, and a non-\emph{Oz} book authored by Baum. For all
@@ -329,32 +340,10 @@ are able to capture distinct stylometric patterns associated with each author.
   \label{fig:merged}
 \end{figure*}
 
-\subsubsection{Eight-Author Comparison}
 
-We then extend our predictive comparison framework to a broader set of eight
-authors. For each author, we compute the predictive loss of the corresponding
-model on a held-out book by that author, as well as on one randomly selected
-book from each of the other authors. As before, evaluation is based on average
-next-token cross-entropy loss computed using a sliding window.
-
-Figure~\ref{fig:merged}B presents the evaluation results across all eight
-authors. Training losses are again comparable across models, ensuring a fair
-basis for comparison. For each author, we compare the predictive losses of all
-models on that author's held-out text. For every author's held-out text, the
-model trained on the matching author achieves the lowest loss, indicating a
-clear preference for its own author's stylistic patterns. This consistent
-alignment provides strong evidence that the GPT-2 models have learned to encode
-author-specific stylometric features.
 
 \subsection{$t$-tests}
 
-To validate our findings in the comparison between Baum and Thompson, we
-conduct a paired $t$-test on the average cross-entropy losses of the two models
-evaluated on the contested 15\textsuperscript{th} \emph{Oz} book. The test
-revealed a statistically significant difference in predictive performance,
-$t(9) = 20.723, p = 6.6 \times 10^{-9}$. These results provide strong evidence
-that the Thompson-trained models predict the contested text more accurately,
-aligning with the prevailing literary consensus regarding its authorship.
 
 We also conduct a $t$-test for the eight-author comparison. Specifically, for
 each author's model, we perform $t$-tests for (i) the loss values computed by
@@ -401,23 +390,29 @@ across all eight authors over training epochs, further illustrating the early
 emergence of stylometric differentiation in the models.
 
 
+The  paired $t$-test also provides further validation for the {\emph{Oz} authorship question. On the average cross-entropy losses of the two models
+evaluated on the contested 15\textsuperscript{th} \emph{Oz} book, the test
+revealed a statistically significant difference in predictive performance,
+$t(9) = 20.723, p = 6.6 \times 10^{-9}$. This provides strong evidence
+that the Thompson-trained models predict the contested text more accurately,
+aligning with prevailing literary consensus regarding its authorship.
 
 
 
 \subsection{Classification}
 
-For each author and each random seed, we compute loss on each evaluation text.
-The ``predicted'' author is the author of the evaluation text that has the
-lowest loss. Under this classification procedure, we have 100\% accuracy.
+For each author and each random seed, we evaluate models trained on that author's work by computing the loss on held-out texts from all eight authors. In every case, the model yields the lowest loss on the held-out text of its corresponding author.
 
 
 \subsection{Stylometric Distance}
 
 Predictive comparison suggests a natural notion of distance between authorial
-styles -- if the loss of predicting tokens in a work of author $j$ from a model
-derived from from the work of author is close to predicting tokens for the work
-of author $i$ and vice-versa, one could say that their writing styles are
-similar or nearby. Let $L_i(j)$ denote the average loss of a work of author $j$
+styles:
+%-- if the loss of predicting tokens in a work of author $j$ from a model
+%derived from from the work of author is close to predicting tokens for the work
+%of author $i$ and vice-versa, one could say %that their writing styles are
+%similar or nearby. 
+Let $L_i(j)$ denote the average loss of a work of author $j$
 for a model trained on author $i$ (the $i,j$-entry of the heatmap/average loss
 matrix in Figure~\ref{fig:merged}F). Let $\overline{L_i(j)} = L_i(j)-L_i(i)$,
 normalizing the entries by subtracting the native author baseline. Then define
@@ -480,19 +475,18 @@ LLM. Finally, deploying this idea at scale would require fine-tuning one model f
 % Custom bibliography entries only
 \bibliography{custom}
 
-\clearpage
+%\clearpage
 
-\newpage
+%\newpage
 
 
 \appendix
 
-\section{Authors, Books, Tokens}
-\label{sec:appendixA}
-
 \twocolumn[
+
 \begin{center}
-    
+{\Large \bfseries Appendix A: Authors, Books, Tokens \par}
+\vspace{1em}
 \begin{tabular}{@{}ll|ll@{}}
 \toprule
 \textbf{Charles Dickens} & \textbf{Tokens} & \textbf{Herman Melville} & \textbf{Tokens} \\
